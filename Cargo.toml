@@ -1,12 +1,12 @@
 [package]
 name = "vt100"
 version = "0.15.2"
-authors = ["Jesse Luehrs <doy@tozt.net>"]
+authors = ["Chris Titus <contact@christitus.com>", "Jesse Luehrs <doy@tozt.net>"]
 edition = "2021"
 
-description = "Library for parsing terminal data"
-homepage = "https://github.com/doy/vt100-rust"
-repository = "https://github.com/doy/vt100-rust"
+description = "Library for parsing terminal data - up-to-date version"
+homepage = "https://github.com/ChrisTitusTech/vt100-rust"
+repository = "https://github.com/ChrisTitusTech/vt100-rust"
 readme = "README.md"
 keywords = ["terminal", "vt100"]
 categories = ["command-line-interface", "encoding"]

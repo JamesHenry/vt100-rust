@@ -33,9 +33,7 @@
 //! );
 //! ```
 
-#![warn(clippy::cargo)]
 #![warn(clippy::pedantic)]
-#![warn(clippy::nursery)]
 #![warn(clippy::as_conversions)]
 #![warn(clippy::get_unwrap)]
 #![allow(clippy::cognitive_complexity)]

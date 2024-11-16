@@ -1,6 +1,6 @@
 #[test]
 fn init() {
-    let parser = vt100::Parser::default();
+    let parser = vt100_ctt::Parser::default();
     assert_eq!(parser.screen().size(), (24, 80));
     assert_eq!(parser.screen().cursor_position(), (0, 0));
 
@@ -28,10 +28,10 @@ fn init() {
     assert!(!parser.screen().bracketed_paste());
     assert_eq!(
         parser.screen().mouse_protocol_mode(),
-        vt100::MouseProtocolMode::None
+        vt100_ctt::MouseProtocolMode::None
     );
     assert_eq!(
         parser.screen().mouse_protocol_encoding(),
-        vt100::MouseProtocolEncoding::Default
+        vt100_ctt::MouseProtocolEncoding::Default
     );
 }

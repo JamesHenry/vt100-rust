@@ -21,13 +21,13 @@ fn vb() {
         vb: usize,
     }
 
-    impl vt100::Callbacks for State {
-        fn visual_bell(&mut self, _: &mut vt100::Screen) {
+    impl vt100_ctt::Callbacks for State {
+        fn visual_bell(&mut self, _: &mut vt100_ctt::Screen) {
             self.vb += 1;
         }
     }
 
-    let mut parser = vt100::Parser::default();
+    let mut parser = vt100_ctt::Parser::default();
     let mut state = State { vb: 0 };
     assert_eq!(state.vb, 0);
 

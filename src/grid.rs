@@ -244,6 +244,99 @@ impl Grid {
         prev_attrs
     }
 
+    /**
+     * Added to be able to support copying the entire screen contents (including anything in the scrollback buffer)
+     * without ANSI escape codes.
+     */
+    pub fn write_all_contents(&self, contents: &mut String) {
+        let mut wrapping = false;
+
+        // Write scrollback buffer contents
+        for row in &self.scrollback {
+            row.write_contents(contents, 0, self.size.cols, wrapping);
+            if !row.wrapped() {
+                contents.push('\n');
+            }
+            wrapping = row.wrapped();
+        }
+
+        // Write current grid contents
+        for row in &self.rows {
+            row.write_contents(contents, 0, self.size.cols, wrapping);
+            if !row.wrapped() {
+                contents.push('\n');
+            }
+            wrapping = row.wrapped();
+        }
+
+        while contents.ends_with('\n') {
+            contents.truncate(contents.len() - 1);
+        }
+    }
+
+    /**
+     * Added to be able to extract the entire screen contents (including anything in the scrollback buffer),
+     * including all ANSI escape codes, in order to cache terminal outputs for a task.
+     */
+    pub fn write_all_contents_formatted(
+        &self,
+        contents: &mut Vec<u8>,
+    ) -> crate::attrs::Attrs {
+        crate::term::ClearAttrs.write_buf(contents);
+        crate::term::ClearScreen.write_buf(contents);
+
+        let mut prev_attrs = crate::attrs::Attrs::default();
+        let mut prev_pos = Pos::default();
+        let mut wrapping = false;
+
+        let mut all_rows = self.scrollback.clone();
+        all_rows.extend(self.rows.iter().cloned());
+        let total_rows = all_rows.len();
+
+        for (i, row) in all_rows.iter().enumerate() {
+            let i = i.try_into().unwrap();
+
+            // If we're not wrapping from the previous line, ensure cursor is at start of current line
+            if !wrapping {
+                let current_pos = Pos { row: i, col: 0 };
+                if current_pos != prev_pos {
+                    crate::term::MoveFromTo::new(prev_pos, current_pos)
+                        .write_buf(contents);
+                    prev_pos = current_pos;
+                }
+            }
+
+            let (new_pos, new_attrs) = row.write_contents_formatted(
+                contents,
+                0,
+                self.size.cols,
+                i,
+                wrapping,
+                Some(prev_pos),
+                Some(prev_attrs),
+            );
+
+            prev_pos = new_pos;
+            prev_attrs = new_attrs;
+            wrapping = row.wrapped();
+
+            // If not wrapping to next line and not on the last row, write a line feed
+            if !wrapping && i < (total_rows - 1) as u16 {
+                contents.extend(b"\r\n");
+                prev_pos.row += 1;
+                prev_pos.col = 0;
+            }
+        }
+
+        self.write_cursor_position_formatted(
+            contents,
+            Some(prev_pos),
+            Some(prev_attrs),
+        );
+
+        prev_attrs
+    }
+
     pub fn write_contents_diff(
         &self,
         contents: &mut Vec<u8>,
@@ -723,6 +816,14 @@ impl Grid {
         if self.pos.col > self.size.cols - 1 {
             self.pos.col = self.size.cols - 1;
         }
+    }
+
+    /**
+     * ADDED BY JamesHenry
+     */
+    pub fn get_total_content_rows(&self) -> usize {
+        // Total content is scrollback buffer size plus viewport size
+        self.scrollback.len() + self.rows.len()
     }
 }
 

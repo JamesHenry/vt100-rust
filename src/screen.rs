@@ -268,6 +268,38 @@ impl Screen {
         contents
     }
 
+    /**
+     * Added to be able to synchronize scrollbar widget positioning and printing with the screen contents.
+     */
+    pub fn get_total_content_rows(&self) -> usize {
+        self.grid().get_total_content_rows()
+    }
+
+    /**
+     * Added to be able to support copying the entire screen contents (including anything in the scrollback buffer)
+     * without ANSI escape codes.
+     */
+    pub fn all_contents(&self) -> String {
+        let mut contents = String::new();
+        self.grid().write_all_contents(&mut contents);
+        contents
+    }
+
+    /**
+     * Added to be able to extract the entire screen contents (including anything in the scrollback buffer),
+     * including all ANSI escape codes, in order to cache terminal outputs for a task.
+     */
+    pub fn all_contents_formatted(&self) -> Vec<u8> {
+        let mut contents = vec![];
+        // Hide the cursor escape sequence from the output
+        crate::term::HideCursor::new(true).write_buf(&mut contents);
+        let prev_attrs =
+            self.grid().write_all_contents_formatted(&mut contents);
+        self.attrs
+            .write_escape_code_diff(&mut contents, &prev_attrs);
+        contents
+    }
+
     fn write_contents_formatted(&self, contents: &mut Vec<u8>) {
         crate::term::HideCursor::new(self.hide_cursor()).write_buf(contents);
         let prev_attrs = self.grid().write_contents_formatted(contents);

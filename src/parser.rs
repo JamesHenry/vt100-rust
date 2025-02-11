@@ -3,6 +3,8 @@
 pub struct Parser {
     parser: vte::Parser,
     screen: crate::perform::WrappedScreen,
+    /* Added to be able to handle terminal resize events in the pty instance that leverages the parser */
+    raw_output: Vec<u8>,
 }
 
 impl Parser {
@@ -16,12 +18,17 @@ impl Parser {
                 crate::grid::Size { rows, cols },
                 scrollback_len,
             )),
+            /* Added to be able to handle terminal resize events in the pty instance that leverages the parser */
+            raw_output: Vec::new(),
         }
     }
 
     /// Processes the contents of the given byte string, and updates the
     /// in-memory terminal state.
     pub fn process(&mut self, bytes: &[u8]) {
+        /* Added to be able to handle terminal resize events in the pty instance that leverages the parser */
+        self.raw_output.extend_from_slice(bytes);
+
         for byte in bytes {
             self.parser.advance(&mut self.screen, *byte);
         }
@@ -56,6 +63,16 @@ impl Parser {
     #[must_use]
     pub fn screen_mut(&mut self) -> &mut crate::Screen {
         &mut self.screen.0
+    }
+
+    /* Added to be able to handle terminal resize events in the pty instance that leverages the parser */
+    pub fn get_raw_output(&self) -> &[u8] {
+        &self.raw_output
+    }
+
+    /* Added to be able to handle terminal resize events in the pty instance that leverages the parser */
+    pub fn clear_raw_output(&mut self) {
+        self.raw_output.clear();
     }
 }
 
